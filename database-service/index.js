@@ -58,33 +58,29 @@ const fetchAndSaveStockData = async () => {
     );
 
     console.log("API Response:", response.data);
-    const data = response.data.TotalTradeRealReply;
-    // Xóa dữ liệu cũ và lưu dữ liệu mới vào MongoDB
-    await Stock.deleteMany({});
-    await Stock.insertMany(data);
-    console.log("Data fetched and saved to MongoDB");
-
-    // if (data) {
-    //   // Cập nhật hoặc chèn mới chứng khoán vào MongoDB
-    //   await Stock.updateMany(
-    //     { "codeReply.codeID": data.codeReply.codeID },
-    //     { $set: data.codeReply },
-    //     { upsert: true }
-    //   );
-    // }
-
-    // if (data) {
-    //   // Cập nhật hoặc chèn mới dữ liệu chứng khoán vào MongoDB
-    //   await Stock.updateMany(
-    //     {
-    //       "codeReply.codeID": data.codeReply.codeID,
-    //     },
-    //     { $set: data.stockTotalReals },
-    //     { upsert: true }
-    //   );
-    // }
-
+    // const data = response.data.TotalTradeRealReply;
+    // // Xóa dữ liệu cũ và lưu dữ liệu mới vào MongoDB
+    // await Stock.deleteMany({});
+    // await Stock.insertMany(data);
     // console.log("Data fetched and saved to MongoDB");
+    const data = response.data.TotalTradeRealReply;
+
+    if (data && data.codeReply) {
+      // Xóa dữ liệu cũ trước khi lưu dữ liệu mới
+      await Stock.deleteMany({});
+
+      // Lưu dữ liệu mới vào MongoDB
+      const newStockReal = new Stock({
+        codeReply: data.codeReply,
+        stockTotalReals: data.stockTotalReals,
+      });
+
+      await newStockReal.save();
+
+      console.log("Data fetched and saved to MongoDB");
+    } else {
+      console.log("No data to save.");
+    }
   } catch (error) {
     console.error("Error fetching and saving data:", error);
   }
@@ -121,7 +117,7 @@ cron.schedule("* * * * *", async () => {
  */
 app.get("/api/stocks", async (req, res) => {
   const stocks = await Stock.find();
-  res.json(stocks);
+  res.status(200).send({ msg: "data:", stocks });
 });
 
 /**
@@ -155,60 +151,155 @@ app.get("/api/stocks", async (req, res) => {
 app.post("/api/stocks", async (req, res) => {
   const stock = new Stock(req.body);
   await stock.save();
-  res.status(201).json(stock);
+  res.status(200).send({ msg: "data:", stock });
 });
 
 /**
  * @openapi
- * /api/stocks/{id}:
+ * /api/stocks/{stockId}/stockTotalReals/{realsId}:
  *   put:
- *     summary: Update a stock by ID
+ *     summary: Update a stockTotalReals
  *     parameters:
- *       - name: id
+ *       - name: stockId
  *         in: path
  *         required: true
  *         schema:
  *           type: string
+ *         description: The ID of the stock
+ *       - name: realsId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the stockTotalReals entry
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             properties:
+ *               close:
+ *                 type: number
+ *                 description: Closing price
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Date of the stock data
+ *               high:
+ *                 type: number
+ *                 description: Highest price
+ *               low:
+ *                 type: number
+ *                 description: Lowest price
+ *               open:
+ *                 type: number
+ *                 description: Opening price
+ *               ticker:
+ *                 type: string
+ *                 description: Stock ticker symbol
+ *               vol:
+ *                 type: number
+ *                 description: Volume of stocks traded
  *     responses:
  *       200:
- *         description: Stock updated
+ *         description: StockTotalReals entry updated successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
+ *       404:
+ *         description: Stock or stockTotalReals entry not found
+ *       500:
+ *         description: Error updating stockTotalReals
  */
-app.put("/api/stocks/:id", async (req, res) => {
-  const stock = await Stock.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-  });
-  res.json(stock);
-});
+app.put("/api/stocks/:stockId/stockTotalReals/:realsId", async (req, res) => {
+  const { stockId, realsId } = req.params;
+  const updateData = req.body;
 
+  try {
+    const stock = await Stock.findOneAndUpdate(
+      { _id: stockId, "stockTotalReals._id": realsId },
+      {
+        $set: {
+          "stockTotalReals.$": updateData,
+        },
+      },
+      { new: true }
+    );
+
+    if (!stock) {
+      return res
+        .status(404)
+        .send({ message: "Stock or stockTotalReals not found" });
+    }
+
+    res.status(200).send({ msg: "data:", stock });
+  } catch (error) {
+    res.status(500).send({ message: "Error updating stockTotalReals", error });
+  }
+});
 /**
  * @openapi
- * /api/stocks/{id}:
+ * /api/stocks/{stockId}/stockTotalReals/{realsId}:
  *   delete:
- *     summary: Delete a stock by ID
+ *     summary: Delete a stockTotalReals
  *     parameters:
- *       - name: id
+ *       - name: stockId
  *         in: path
  *         required: true
  *         schema:
  *           type: string
+ *         description: The ID of the stock
+ *       - name: realsId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the stockTotalReals entry
  *     responses:
- *       204:
- *         description: Stock deleted
+ *       200:
+ *         description: StockTotalReals entry deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       404:
+ *         description: Stock or stockTotalReals entry not found
+ *       500:
+ *         description: Error deleting stockTotalReals
  */
-app.delete("/api/stocks/:id", async (req, res) => {
-  await Stock.findByIdAndDelete(req.params.id);
-  res.status(204).end();
-});
+app.delete(
+  "/api/stocks/:stockId/stockTotalReals/:realsId",
+  async (req, res) => {
+    const { stockId, realsId } = req.params;
+
+    try {
+      const stock = await Stock.findByIdAndUpdate(
+        stockId,
+        {
+          $pull: { stockTotalReals: { _id: realsId } },
+        },
+        { new: true }
+      );
+
+      if (!stock) {
+        return res
+          .status(404)
+          .json({ message: "Stock or stockTotalReals not found" });
+      }
+
+      res.status(200).send({
+        message: "StockTotalReals entry deleted successfully",
+        stock,
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .send({ message: "Error deleting stockTotalReals", error });
+    }
+  }
+);
 
 mongoose
   .connect(
