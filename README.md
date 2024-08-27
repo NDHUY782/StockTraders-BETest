@@ -28,7 +28,6 @@ Trên Ubuntu:
 ```bash
 sudo apt update
 sudo apt install docker.io docker-compose
-Clone Repository
 
 ```
 
@@ -40,6 +39,19 @@ Clone Repository
 git clone https://github.com/NDHUY782/StockTraders-BETest.git
 
 cd StockTraders-BETest
+
+cd StockTraders-BETest/database-service
+npm install
+
+cd StockTraders-BETest/kafka-consumer
+npm install
+
+cd StockTraders-BETest/kafka-producer
+npm install
+
+cd StockTraders-BETest/stock-data-service
+npm install
+
 ```
 
 #### Xây Dựng Docker Images
