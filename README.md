@@ -75,3 +75,7 @@ Sử dụng thư viện Swagger để thực hiện các thao tác
 **http://3.107.86.47:3002/api-docs**
 
 **http://3.107.86.47:3003/api-docs**
+
+# **_LƯU Ý_**
+
+`Nếu không sử dụng được link production được deploy trên AWS EC2 vui lòng sử dụng localhost`
