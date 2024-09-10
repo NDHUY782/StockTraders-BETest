@@ -70,11 +70,11 @@ docker-compose up
 
 Sử dụng thư viện Swagger để thực hiện các thao tác
 
-**1.** Truy cập http://localhost:3001/api-docs ==> Để xem thông tin chứng khoán thời gian thực
+**1.** Truy cập http://localhost/stock-data/api-docs/ ==> Để xem thông tin chứng khoán thời gian thực
 
-**2.** Truy cập http://localhost:3002/api-docs/ ==> Để thực hiện các thao tác CRUD cơ bản
+**2.** Truy cập http://localhost/database/api-docs/ ==> Để thực hiện các thao tác CRUD cơ bản
 
-**3.** Truy cập http://localhost:3003/api-docs/==> Để truy cập và thực hiện gửi thông báo thời gian thực cho client
+**3.** Truy cậphttp://localhost/notification/api-docs/ ==> Để truy cập và thực hiện gửi thông báo thời gian thực cho client
 
 ### Hoặc
 
